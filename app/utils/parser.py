@@ -241,9 +241,8 @@ def parse_network_file(file_content: str, filename: str) -> Dict[str, Any]:
     if not platform_specific_templates:
         logger.warning(f"No TextFSM templates found for detected platform: '{device_platform}' for file '{filename}'")
         return {
-            "platform": device_platform,
-            "data": {"Error": f"No templates configured for {device_platform}"},
-            "filename": filename
+            "model": device_platform,
+            "data": {"Error": f"No templates configured for {device_platform}"}
         }
 
     # Parse all commands using TextFSM for the detected platform
@@ -304,7 +303,6 @@ def parse_network_file(file_content: str, filename: str) -> Dict[str, Any]:
     parsed_data_for_file["Calculated_CPU_Memory"] = device_specific_cpu_mem_data
 
     return {
-        "platform": device_platform,
-        "data": parsed_data_for_file,
-        "filename": filename
+        "model": device_platform,
+        "data": parsed_data_for_file
     }

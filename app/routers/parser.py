@@ -43,7 +43,7 @@ async def upload_files(
     user_upload_dir = os.path.join(settings.upload_dir, str(current_user.id))
     os.makedirs(user_upload_dir, exist_ok=True)
     
-    parsed_results = []
+    parsed_results = {}
     
     for uploaded_file in files:
         # Check file extension
@@ -69,11 +69,14 @@ async def upload_files(
         # Parse the network file
         parsed_data = parse_network_file(file_content, uploaded_file.filename)
         
+        # Store in the same format as Django version
+        parsed_results[uploaded_file.filename] = parsed_data
+        
         # Save to database
         db_parse_result = ParseResult(
             user_id=current_user.id,
             filename=uploaded_file.filename,
-            platform=parsed_data["platform"],
+            platform=parsed_data["model"],
             parsed_data=parsed_data["data"],
             file_path=file_path
         )
@@ -81,10 +84,8 @@ async def upload_files(
         db.commit()
         db.refresh(db_parse_result)
         
-        parsed_results.append(db_parse_result)
         logger.info(f"Successfully parsed and saved: {uploaded_file.filename}")
     
-    return parsed_results
 
 @router.get("/results", response_model=List[ParseResultSchema])
 def get_parse_results(
