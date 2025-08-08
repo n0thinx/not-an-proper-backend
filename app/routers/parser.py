@@ -86,6 +86,34 @@ async def upload_files(
         
         logger.info(f"Successfully parsed and saved: {uploaded_file.filename}")
     
+    # Also save the complete parsed results as JSON file (matching Django behavior)
+    json_filename = os.path.join(user_upload_dir, "parsed_output.json")
+    with open(json_filename, "w", encoding="utf-8") as json_file:
+        json.dump(parsed_results, json_file, indent=4)
+    
+    # Return database results for API response
+    db_results = db.query(ParseResult).filter(ParseResult.user_id == current_user.id).all()
+    return db_results
+
+@router.get("/download-json")
+def download_complete_json(
+    current_user: User = Depends(get_current_active_user)
+):
+    """Download complete parsed JSON output (matching Django format)."""
+    user_upload_dir = os.path.join(settings.upload_dir, str(current_user.id))
+    json_filename = os.path.join(user_upload_dir, "parsed_output.json")
+    
+    if not os.path.exists(json_filename):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="JSON file not found"
+        )
+    
+    return FileResponse(
+        json_filename,
+        media_type="application/json",
+        filename="parsed_output.json"
+    )
 
 @router.get("/results", response_model=List[ParseResultSchema])
 def get_parse_results(
